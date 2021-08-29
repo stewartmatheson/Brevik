@@ -13,9 +13,54 @@ namespace Generator
             this.file = file;
         }
 
+        public bool Ignorable {
+            get {
+                foreach (string path_part in file.Split(Path.DirectorySeparatorChar)) {
+                    if (path_part.StartsWith(".")) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+        }
+
         public override string ToString()
         {
-            return file;
+            if (Ignorable)
+            {
+                return "[I]" + file;
+            }
+            else 
+            { 
+                return file;
+            }
+        }
+
+        public void Publish(string source, string dest) {
+            if (Ignorable) {
+                return;
+            }
+
+            var file_source = source + Path.DirectorySeparatorChar + file;
+            /*
+            if (File.Exists(file_source)) {
+                return;
+            }
+            */
+
+            System.Console.WriteLine(
+                file_source +
+                " => " +
+                dest + Path.DirectorySeparatorChar + file
+            );
+
+
+            /*
+            File.Copy(
+                file_source,
+                dest + Path.DirectorySeparatorChar + file
+            );
+            */
         }
     }
 
@@ -38,10 +83,20 @@ namespace Generator
 
         public void Build() {
             System.Console.WriteLine("Building In " + root);
-            var full_source_path = root + System.IO.Path.DirectorySeparatorChar + template;
+            Directory.CreateDirectory(root + Path.DirectorySeparatorChar + output);
+            var full_source_path = root + Path.DirectorySeparatorChar + template;
             var site_file_paths = ProcessDirectory(full_source_path);
-            var site_resources = site_file_paths.ConvertAll<SiteResource>(file => new SiteResource(file));
-            site_resources.ForEach(resource => System.Console.WriteLine(resource.ToString()));
+            var site_resources = site_file_paths
+                .ConvertAll<SiteResource>(file => new SiteResource(file.Split(full_source_path)[1].Substring(1)));
+            site_resources.ForEach(resource => {
+                //System.Console.WriteLine(resource.ToString());
+                resource.Publish(full_source_path, root + Path.DirectorySeparatorChar + output);
+            });
+        }
+
+        public void Clean() {
+
+            Directory.Delete(root + Path.DirectorySeparatorChar + output, true);
         }
 
         private List<string> ProcessDirectory(string root_directory) { 
@@ -76,6 +131,13 @@ namespace Generator
                 var root = args.Length > 1 ? args[1] : System.Environment.CurrentDirectory;
                 var site = new Site(root);
                 site.Build();
+                System.Environment.Exit(0);
+            }
+
+            if (args[0] == "clean") {
+                var root = args.Length > 1 ? args[1] : System.Environment.CurrentDirectory;
+                var site = new Site(root);
+                site.Clean();
                 System.Environment.Exit(0);
             }
 
