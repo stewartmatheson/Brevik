@@ -1,0 +1,14 @@
+{
+  "FileVersion": 2,
+  "Id": "d760771a-f73f-4b75-864a-9032cbc4f36f",
+  "Items": [
+    {
+      "Id": "dd8132ba-3f19-4f65-9395-ed79744a554e",
+      "Command": "build $PWD"
+    },
+    {
+      "Id": "03270ee7-7006-44c6-83f7-8439d7017551",
+      "Command": "new TestSite"
+    }
+  ]
+}
