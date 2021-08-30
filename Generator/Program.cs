@@ -1,9 +1,25 @@
 ﻿using System;
 using System.IO;
 using System.Collections.Generic;
+using Scriban;
 
 namespace Generator
 {
+
+    public class TemplateBuilder {
+        public static void Copy(string source, string dest) {
+            // BUG : Not reading the template
+            var template = Template.Parse("", source);
+            var result = template.Render();
+            File.WriteAllText(dest, result);
+        }
+    }
+
+    public enum ResourceType { 
+        Template,
+        Unknown
+    }
+
     public class SiteResource
     {
         private string file;
@@ -24,15 +40,26 @@ namespace Generator
             }
         }
 
+        public ResourceType Type
+        {
+            get {
+                var file_parts = file.Split(".");
+                if (file_parts[file_parts.Length - 1] == "html") {
+                    return ResourceType.Template;
+                }
+                return ResourceType.Unknown;
+            } 
+        }
+
         public override string ToString()
         {
             if (Ignorable)
             {
-                return "[I]" + file;
+                return "(" + Type.ToString() + ") [I] " + file;
             }
             else 
             { 
-                return file;
+                return "(" + Type.ToString() + ") " + file;
             }
         }
 
@@ -42,25 +69,39 @@ namespace Generator
             }
 
             var file_source = source + Path.DirectorySeparatorChar + file;
-            /*
-            if (File.Exists(file_source)) {
-                return;
-            }
-            */
 
+            /*
             System.Console.WriteLine(
                 file_source +
                 " => " +
                 dest + Path.DirectorySeparatorChar + file
             );
-
-
-            /*
-            File.Copy(
-                file_source,
-                dest + Path.DirectorySeparatorChar + file
-            );
             */
+
+            if (File.Exists(dest + Path.DirectorySeparatorChar + file)) {
+                return;
+            }
+
+            if (Type == ResourceType.Template) { 
+                TemplateBuilder.Copy(
+                    file_source,
+                    dest + Path.DirectorySeparatorChar + file
+                );
+            }
+
+            if (Type == ResourceType.Unknown)
+            {
+                // BUG to creating recursive folder
+                Directory.CreateDirectory(
+                    Path.GetDirectoryName(
+                        dest + Path.DirectorySeparatorChar + file
+                    )
+                );
+                File.Copy(
+                    file_source,
+                    dest + Path.DirectorySeparatorChar + file
+                );
+            }
         }
     }
 
@@ -89,7 +130,7 @@ namespace Generator
             var site_resources = site_file_paths
                 .ConvertAll<SiteResource>(file => new SiteResource(file.Split(full_source_path)[1].Substring(1)));
             site_resources.ForEach(resource => {
-                //System.Console.WriteLine(resource.ToString());
+                System.Console.WriteLine("Publishing " + resource.ToString());
                 resource.Publish(full_source_path, root + Path.DirectorySeparatorChar + output);
             });
         }

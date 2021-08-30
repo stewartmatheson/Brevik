@@ -2,7 +2,7 @@
   "profiles": {
     "Generator": {
       "commandName": "Project",
-      "commandLineArgs": "clean C:\\Users\\Stewart\\SourceCode\\Brevik\\TestSite"
+      "commandLineArgs": "build C:\\Users\\Stewart\\SourceCode\\Brevik\\TestSite"
     }
   }
 }
